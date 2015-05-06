@@ -48,6 +48,17 @@ public class JSONRequestObject {
         return method;
     }
 
+    public void setParams(Map<String, String> params) {
+        this.params = params;
+    }
+    public void setParam(String key, String value){
+        this.params.put(key, value);
+    }
+
+    public void setjsonObject(JSONObject jsonObject) {
+        this.jsonObject = jsonObject;
+    }
+
     public void putToJSON(String key, JSONArray value){
         try {
             jsonObject.put(key, value);
@@ -63,7 +74,14 @@ public class JSONRequestObject {
             e.printStackTrace();
         }
     }
-
+    public void putToJSON(String name, int value){
+        try {
+            jsonObject.put(name, value);
+        } catch (JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
     public void putToJSON(String name, double value){
         try {
             jsonObject.put(name, value);
