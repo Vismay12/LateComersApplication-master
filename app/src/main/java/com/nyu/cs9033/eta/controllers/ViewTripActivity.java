@@ -13,8 +13,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 public class ViewTripActivity extends Activity {
 
     private static final String TAG = "ViewTripActivity";
@@ -44,7 +42,7 @@ public class ViewTripActivity extends Activity {
             public void onClick(View view) {
                 getSharedPreferences(Trip.SHARED_PREF, Context.MODE_PRIVATE)
                         .edit()
-                        .putLong(Trip.PREF_CURRENT_TRIP, trip.getID())
+                        .putLong(Trip.ACTIVE_TRIP, trip.getTripID())
                         .commit();
           Intent intent =new Intent(getApplicationContext(),MainActivity.class);
                 startActivity(intent);

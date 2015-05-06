@@ -27,20 +27,18 @@ public class ParseJSON {
 
     public static ArrayList<Person> parseInfo(String content) {
         try {
-            ArrayList<Person> pList = new ArrayList();
+            ArrayList<Person> people = new ArrayList<Person>();
             JSONObject obj = new JSONObject(content);
             JSONArray distLeft = obj.getJSONArray("distance_left");
             JSONArray timeLeft = obj.getJSONArray("time_left");
-            JSONArray people = obj.getJSONArray("people");
-            for (int i = 0; i < people.length(); i++) {
-                pList.add(new Person(people.getString(i),
-                        distLeft.getDouble(i), timeLeft.getLong(i)));
+            JSONArray friends = obj.getJSONArray("people");
+            for (int i = 0; i < friends.length(); i++) {
+                people.add(new Person(friends.getString(i),distLeft.getDouble(i), timeLeft.getLong(i)));
             }
-            return pList;
+            return people;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
         }
-
     }
 }

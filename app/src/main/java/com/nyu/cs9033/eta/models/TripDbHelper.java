@@ -200,7 +200,6 @@ private static final String DATABASE_NAME = "trip_db";
     }
     @SuppressLint("UseSparseArrays")
     public ArrayList<Trip> getAllTrips(){
-        //java.util.HashMap<Long, Trip> allTrips = new java.util.HashMap<Long,Trip>();
         ArrayList<Trip> allTrips = new ArrayList<Trip>();
         ArrayList<Long> tripIds = new ArrayList<Long>();
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();

@@ -39,7 +39,7 @@
             android:label="@string/app_name" >
         </activity>
 
-        <service android:name="com.nyu.cs9033.eta.service.PollTripService" />
+        <service android:name="com.nyu.cs9033.eta.service.TripUpdaterService" />
     </application>
 
 </manifest>

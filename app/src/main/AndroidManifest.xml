@@ -37,7 +37,7 @@
             android:name="com.nyu.cs9033.eta.controllers.ViewTripActivity"
             android:label="@string/app_name" >
         </activity>
-        <service android:name="com.nyu.cs9033.eta.service.PollTripService"/>
+        <service android:name=".service.TripUpdaterService"/>
     </application>
     
 </manifest>

@@ -18,19 +18,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 
-public class PollTripService extends IntentService {
+public class TripUpdaterService extends IntentService {
 
-	private static final String TAG = "PollTripService";
+	private static final String TAG = TripUpdaterService.class.getSimpleName();
 	private static final int POLL_INTERVAL = 1000 * 60;
-	private LocationManager mLocationManager;
-	private Location location;
-	private bg serviceThread;
-	String provider;
+	private PBG pollingBackgroundThread;
 	double latitude;
 	double longitude;
     public static boolean ALIVE = false;
     
-	public PollTripService() {
+	public TripUpdaterService() {
 		super(TAG);
 	}
 	@Override
@@ -41,12 +38,9 @@ public class PollTripService extends IntentService {
 	}
 	@Override
 	protected void onHandleIntent(Intent intent) {
-		if(serviceThread == null) {
-	           serviceThread = new bg();
+		if(pollingBackgroundThread == null) {
+	           pollingBackgroundThread = new PBG();
 		}
-		mLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-		provider = LocationManager.GPS_PROVIDER;
-		//location = mLocationManager.getLastKnownLocation(provider);
 		LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 
 		 final LocationListener locationListener = new LocationListener() {
@@ -71,42 +65,20 @@ public class PollTripService extends IntentService {
 			}
 		};
 
-		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000*30, 0, locationListener);
-
-		Log.d("location",location+"");
-
-		if(location==null){
-
-
-			Log.d(TAG," your last known location is null");
-		}
-		if(!serviceThread.isAlive())
-			serviceThread.start();
+		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 30, 0, locationListener);
+		if(!pollingBackgroundThread.isAlive())
+			pollingBackgroundThread.start();
 	}
 
-	public static void setServiceAlarm(Context context, boolean isOn){
-        Intent i = new Intent(context, PollTripService.class);
-        PendingIntent pi = PendingIntent.getService(context, 0, i, 0);
-        
-        AlarmManager alarmManager = (AlarmManager)
-            context.getSystemService(Context.ALARM_SERVICE);
 
-        if(isOn) {
-            alarmManager.setRepeating(AlarmManager.RTC, 
-                System.currentTimeMillis(), POLL_INTERVAL, pi);
-        } else {
-            alarmManager.cancel(pi);
-            pi.cancel();
-        }
-    }
-	private class bg extends Thread {
+	private class PBG extends Thread {
 		@Override
 		public void run() {
 			super.run();
 			JSONRequestObject p = new JSONRequestObject();
 			LocationListener gpsLocationListener;
 
-			Log.i(TAG, "Background Thread Running");
+			Log.i(TAG, "Background Thread Entry");
 
 			p.setMethod("PUT");
 			p.setUri(ConnectInternet.SERVERURI);
@@ -119,7 +91,8 @@ public class PollTripService extends IntentService {
 			String connectData = ConnectInternet.getData(p);
 			
 			if(connectData == null){
-				return;
+				Log.d(TAG,"connectData is null");
+ 				return;
 			}
 			JSONObject jsObj;
 			try {
@@ -131,7 +104,20 @@ public class PollTripService extends IntentService {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			Log.i(TAG,"Background Thread Done");
+			Log.i(TAG,"Background Thread exit");
+		}
+	}
+	public static void wakeUpPolling(Context context, boolean alive){
+		Intent i = new Intent(context, TripUpdaterService.class);
+		PendingIntent pi = PendingIntent.getService(context, 0, i, 0);
+		AlarmManager alarmManager = (AlarmManager)
+				context.getSystemService(Context.ALARM_SERVICE);
+		if(alive) {
+			alarmManager.setRepeating(AlarmManager.RTC,
+					System.currentTimeMillis(), POLL_INTERVAL, pi);
+		} else {
+			alarmManager.cancel(pi);
+			pi.cancel();
 		}
 	}
 }

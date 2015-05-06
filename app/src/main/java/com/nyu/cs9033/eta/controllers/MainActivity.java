@@ -5,43 +5,42 @@ import com.nyu.cs9033.eta.models.Person;
 import com.nyu.cs9033.eta.models.Trip;
 import com.nyu.cs9033.eta.R;
 import com.nyu.cs9033.eta.models.TripDbHelper;
-import com.nyu.cs9033.eta.service.PollTripService;
-
+import com.nyu.cs9033.eta.service.TripUpdaterService;
+import android.app.Activity;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
+import android.widget.TextView;
 import android.os.Bundle;
-import android.app.Activity;
 import android.content.Intent;
 import android.util.Log;
+import android.os.AsyncTask;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
-
+import android.widget.ListView;
 import java.util.ArrayList;
 
 public class MainActivity extends Activity {
 
-    private static final int VIEWTRIPREQCODE = 2;
-    private static final String TAG = "MainActivity";
+    private static final int VIEW_TRIP_REQ_CODE = 2;
+    private static final String TAG = MainActivity.class.getSimpleName();
     private static final int CREATE_TRIP_REQ_CODE = 1;
     Button createTripButton;
     ArrayList<String> mTripTitles;
     private ArrayList<Trip> mTrips;
     ArrayAdapter<String> adapter = null;
     TextView viewTripButton;
-    private Trip currTrip;
-    private LinearLayout tripDetails;
+    private Trip activeTrip;
+    private LinearLayout currentTripInfo;
     ListView tripTitlesView;
+    TextView viewTripActivityView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,26 +81,25 @@ public class MainActivity extends Activity {
             }
         });
 
-//Current Trip
 
-        TextView tv = (TextView) findViewById(R.id.ViewTripActivityButton);
+        viewTripActivityView = (TextView) findViewById(R.id.ViewTripActivityButton);
         SharedPreferences sp = getSharedPreferences(Trip.SHARED_PREF, Context.MODE_PRIVATE);
-        if (sp.contains(Trip.PREF_CURRENT_TRIP)) {
-            long trip_id = sp.getLong(Trip.PREF_CURRENT_TRIP, -1);
-            for (Trip t : mTrips) {
-                if (t != null) {
-                    if (t.getID() == trip_id) {
-                        tv.setText(t.getName());
-                        tripDetails = (LinearLayout) findViewById(R.id.currentTripInfo);
-                        currTrip = t;
+        if (sp.contains(Trip.ACTIVE_TRIP)) {
+            long trip_id = sp.getLong(Trip.ACTIVE_TRIP, -1);
+            for (Trip trip : mTrips) {
+                if (trip != null) {
+                    if (trip.getTripID() == trip_id) {
+                        viewTripActivityView.setText(trip.getName());
+                        currentTripInfo = (LinearLayout) findViewById(R.id.currentTripInfo);
+                        activeTrip = trip;
                         getTripStatus(ConnectInternet.SERVERURI);
-                        PollTripService.setServiceAlarm(this, true);
+                        TripUpdaterService.wakeUpPolling(this, true);
                         break;
                     }
                 }
             }
         } else {
-            tv.setText("No active Trips!!");
+            viewTripActivityView.setText("Select Trips Seen Below");
         }
 
     }
@@ -114,13 +112,12 @@ public class MainActivity extends Activity {
             req.setMethod("POST");
             req.setUri(uri);
             req.putToJSON("command", "TRIP_STATUS");
-            req.putToJSON("trip_id", currTrip.getID());
+            req.putToJSON("trip_id", activeTrip.getTripID());
 
             TripStatus t = new TripStatus();
             t.execute(req);
         } else {
             Toast.makeText(this, "Internet Problem", Toast.LENGTH_LONG).show();
-            return;
         }
     }
 
@@ -154,7 +151,7 @@ public class MainActivity extends Activity {
         if (trip != null) {
             Intent intent = new Intent(this, ViewTripActivity.class);
             intent.putExtra("trip", trip);
-            startActivityForResult(intent, VIEWTRIPREQCODE);
+            startActivityForResult(intent, VIEW_TRIP_REQ_CODE);
         }
     }
 
@@ -204,10 +201,10 @@ public class MainActivity extends Activity {
 
             }
         }
-         else if(requestCode == VIEWTRIPREQCODE) {
+         else if(requestCode == VIEW_TRIP_REQ_CODE) {
             Log.d(TAG, "inside onTrip Creativity viewTrip block");
             if(resultCode == RESULT_OK){
-                PollTripService.setServiceAlarm(this, true);
+                TripUpdaterService.wakeUpPolling(this, true);
             }
 
         }else{
@@ -223,68 +220,56 @@ public class MainActivity extends Activity {
             Log.d(TAG, "doInBackground");
             String result = ConnectInternet.getData(params[0]);
             Log.d(TAG, result);
-            ArrayList<Person> pList = ParseJSON.parseInfo(result);
-            return pList;
+            ArrayList<Person> friends = ParseJSON.parseInfo(result);
+            return friends;
         }
 
-        @SuppressLint("InlinedApi")
         @Override
         protected void onPostExecute(ArrayList<Person> pList) {
             if (pList == null) {
-                Toast.makeText(MainActivity.this,
-                        "Looks like an error has occurred!", Toast.LENGTH_LONG)
-                        .show();
+                Toast.makeText(MainActivity.this,"Looks like an error has occurred!", Toast.LENGTH_LONG).show();
             } else {
-                LinearLayout ll = new LinearLayout(MainActivity.this);
-                ll.setOrientation(LinearLayout.HORIZONTAL);
-                ll.setLayoutParams(new LinearLayout.LayoutParams(
-                        ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                LinearLayout additionalLayout = new LinearLayout(MainActivity.this);
+                additionalLayout.setOrientation(LinearLayout.HORIZONTAL);
+                additionalLayout.setLayoutParams(new LinearLayout.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT));
 
-                TextView tv1 = new TextView(MainActivity.this);
-                tv1.setLayoutParams(new LinearLayout.LayoutParams(
-                        ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
-                tv1.setText(currTrip.getDate() + " " + currTrip.getTime());
-                tv1.setPadding(1, 1, 5, 1);
 
-                TextView tv2 = new TextView(MainActivity.this);
-                tv2.setLayoutParams(new LinearLayout.LayoutParams(
-                        ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
-                tv2.setText(currTrip.getLocation() + " " + currTrip.getLocationAddr());
+                TextView additionalTextView = new TextView(MainActivity.this);
+                additionalTextView.setLayoutParams(new LinearLayout.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                additionalTextView.setText(activeTrip.getDate() + " " + activeTrip.getTime());
+                additionalTextView.setPadding(2, 2, 5, 2);
 
-                ll.addView(tv1);
-                ll.addView(tv2);
 
-                TextView peopleDet = new TextView(MainActivity.this);
-                peopleDet.setLayoutParams(new LinearLayout.LayoutParams(
+                TextView additionalViewLocLat = new TextView(MainActivity.this);
+                additionalViewLocLat.setLayoutParams(new LinearLayout.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                additionalViewLocLat.setText(activeTrip.getLocation() + " " + activeTrip.getLocationAddr());
+                additionalLayout.addView(additionalTextView);
+                additionalLayout.addView(additionalViewLocLat);
+
+
+                TextView friends = new TextView(MainActivity.this);
+                friends.setLayoutParams(new LinearLayout.LayoutParams(
                         ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT));
                 for (Person p : pList) {
-                    peopleDet.append(p.getName() + " " + p.getDistance_left() + " "
-                            + p.getTime_left() + "\r\n");
+                    friends.append(p.getName() + " " + p.getDistanceLeft() + " " + p.getTimeLeft() + "\r\n");
                 }
 
-                final Button btn = new Button(MainActivity.this);
-                btn.setText("Reached!!");
-                btn.setLayoutParams(new LinearLayout.LayoutParams(
-                        ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
-                btn.setOnClickListener(new View.OnClickListener() {
-
+                final Button endButton = new Button(MainActivity.this);
+                endButton.setText("Present Sir");
+                endButton.setLayoutParams(new LinearLayout.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.MATCH_PARENT));
+                endButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        getSharedPreferences(Trip.SHARED_PREF, Context.MODE_PRIVATE)
-                                .edit()
-                                .remove(Trip.PREF_CURRENT_TRIP)
-                                .commit();
-
-                        PollTripService.setServiceAlarm(getApplicationContext(), false);
-
-                        tripDetails.removeAllViews();
-
+                        getSharedPreferences(Trip.SHARED_PREF, Context.MODE_PRIVATE).edit().remove(Trip.ACTIVE_TRIP).commit();
+                        TripUpdaterService.wakeUpPolling(getApplicationContext(), false);
+                        currentTripInfo.removeAllViews();
+                        viewTripActivityView.setText("Trip tracking ended");
                     }
                 });
 
-                tripDetails.addView(ll);
-                tripDetails.addView(peopleDet);
-                tripDetails.addView(btn);
+                currentTripInfo.addView(additionalLayout);
+                currentTripInfo.addView(friends);
+                currentTripInfo.addView(endButton);
 //                Intent mainActivityIntent = new Intent();
 //                setResult(Activity.RESULT_OK, mainActivityIntent);
 //                finish();

@@ -36,7 +36,7 @@ public class CreateTripActivity extends Activity {
     private static final int REQUEST_LOCATION = 2;
     private static final String AUTH_URI="com.example.nyu.hw3api";
     Uri uri = Uri.parse("location://"+AUTH_URI);
-    private static final String TAG = "CreateTripActivity";
+    private static final String TAG = CreateTripActivity.class.getSimpleName();
     private static final int CONTACT_REQ = 1;
     private EditText mTripTitle;
     private ArrayList<Person> mFriends;
@@ -50,7 +50,6 @@ public class CreateTripActivity extends Activity {
     private String mDate;
     private EditText mLocation;
     private String location;
-    private EditText tripaddress,latitude,longitude;
     public static final String SERVER_URI = "http://cs9033-homework.appspot.com/";
 
     @Override
@@ -263,19 +262,15 @@ public class CreateTripActivity extends Activity {
                 JSONRequestObject jsonRequest = new JSONRequestObject();
                 jsonRequest.setMethod("POST");
                 jsonRequest.setUri(serverUri);
-                JSONArray locArray = null;
+                JSONArray locationDetails = null;
                 try {
-                    locArray  = new JSONArray(new Object[]{location,_l_address,_l_lat,_l_lng});
+                    locationDetails  = new JSONArray(new Object[]{location,_l_address,_l_lat,_l_lng});
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
                 jsonRequest.putToJSON("command", "CREATE_TRIP");
-                jsonRequest.putToJSON("location", locArray);
-                //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                jsonRequest.putToJSON("location", locationDetails);
                 try {
-                    //Date d = sdf.parse(date);
-                    //long time = d.getTime();
-                    //time += timePicker1.getCurrentHour()*3600 + timePicker1.getCurrentMinute()*60;
                     long unixTime = System.currentTimeMillis() / 1000L;
                     Log.d(TAG, "Time in create trip "+unixTime);
                     jsonRequest.putToJSON("datetime", unixTime);
@@ -304,29 +299,6 @@ public class CreateTripActivity extends Activity {
         }
 
 
-    private class returnTripIdAsyncTask extends AsyncTask<JSONRequestObject, Void, Long> {
-
-        @Override
-        protected Long doInBackground(JSONRequestObject... params) {
-            Log.d(TAG,"doInBackground");
-            String result = ConnectInternet.getData(params[0]);
-            Log.v(TAG,result);
-            long tripId = ParseJSON.parseId(result);
-            return tripId;
-        }
-        @Override
-        protected void onPostExecute(Long result) {
-            if(result == 0 || result == -1){
-                Toast.makeText(CreateTripActivity.this,"check your code", Toast.LENGTH_LONG)
-                        .show();
-            }
-            else
-            {
-                Log.d(TAG,"TripID "+ result);
-                mTrip_id = result;
-            }
-        }
-    }
     /**
      * For HW2 you should treat this method as a
      * way of sending the Trip data back to the
@@ -376,5 +348,28 @@ public class CreateTripActivity extends Activity {
     }
 
 
+    private class returnTripIdAsyncTask extends AsyncTask<JSONRequestObject, Void, Long> {
+
+        @Override
+        protected Long doInBackground(JSONRequestObject... params) {
+            Log.d(TAG,"doInBackground");
+            String result = ConnectInternet.getData(params[0]);
+            Log.v(TAG,result);
+            long tripId = ParseJSON.parseId(result);
+            return tripId;
+        }
+        @Override
+        protected void onPostExecute(Long result) {
+            if(result == 0 || result == -1){
+                Toast.makeText(CreateTripActivity.this,"check your code", Toast.LENGTH_LONG)
+                        .show();
+            }
+            else
+            {
+                Log.d(TAG,"TripID "+ result);
+                mTrip_id = result;
+            }
+        }
+    }
 
 }

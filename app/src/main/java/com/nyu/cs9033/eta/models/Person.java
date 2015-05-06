@@ -48,19 +48,16 @@ public class Person implements Parcelable {
 	 * @param name Add arbitrary number of arguments to
 	 * instantiate Person class based on member variables.
 	 */
-	public Person(String name, String phone, String currentLocation) {
-		this.mCurrentLocation=currentLocation;
-        this.mName=name;
-        this.mPhone=phone;
-		// TODO - fill in here, please note you must have more arguments here
-	}
-
 	public Person(String name, double distanceLeft, long timeLeft){
 		this.mName = name;
 		this.mDistLeft = distanceLeft;
 		this.mTimeleft = timeLeft;
 	}
-
+	public Person(String name, String phone, String currentLocation) {
+		this.mCurrentLocation=currentLocation;
+		this.mName=name;
+		this.mPhone=phone;
+	}
 	/**
 	 * Serialize Person object by using writeToParcel.
 	 * This function is automatically called by the
@@ -105,15 +102,11 @@ public class Person implements Parcelable {
         return mCurrentLocation;
     }
 
-	public long getTime_left() {
+	public long getTimeLeft() {
 		return mTimeleft;
 	}
 
-	public void setTime_left(int time_left) {
-		this.mTimeleft = time_left;
-	}
-
-	public double getDistance_left() {
+	public double getDistanceLeft() {
 		return mDistLeft;
 	}
 
