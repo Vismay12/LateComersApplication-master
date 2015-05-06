@@ -86,7 +86,6 @@ public class ViewTripActivity extends Activity {
     public void viewTrip(Trip trip) {
 
         // TODO - fill in here
-        Person[] invited_people = trip.getPeople();
         String location = trip.getLocation();
         String trip_date = trip.getDate();
         String trip_time = trip.getTime();

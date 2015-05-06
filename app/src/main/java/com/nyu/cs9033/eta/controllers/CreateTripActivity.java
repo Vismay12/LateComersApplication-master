@@ -279,7 +279,7 @@ public class CreateTripActivity extends Activity {
                     for (Person friend : mFriends) {
                         friends.add(friend.getName());
                     }
-                    Log.d(TAG, "Inserting names");
+                    Log.d(TAG, "Insert names");
                     jsonRequest.putToJSON("people", new JSONArray(friends.toArray()));
                 }
                 catch (JSONException e) {
@@ -293,7 +293,7 @@ public class CreateTripActivity extends Activity {
 
             else{
                 Toast.makeText(this, "No Internet Connection", Toast.LENGTH_LONG).show();
-                return;
+
             }
 
         }
